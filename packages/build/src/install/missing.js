@@ -1,5 +1,6 @@
-import { promises as fs } from 'fs'
-import { normalize, resolve } from 'path'
+import { promises as fs } from 'node:fs'
+import { normalize, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { execa } from 'execa'
 import { pathExists } from 'path-exists'
@@ -37,16 +38,6 @@ export const installIntegrationPlugins = async function ({
   pluginsEnv,
   buildDir,
 }) {
-  const integrationsToBuild = integrations.filter(
-    (integration) => typeof integration.dev !== 'undefined' && context === 'dev',
-  )
-  if (integrationsToBuild.length) {
-    logSubHeader(logs, 'Building extensions')
-    logArray(
-      logs,
-      integrationsToBuild.map(({ slug, dev: { path } }) => `${slug} from ${path}`),
-    )
-  }
   const packages = (
     await Promise.all(
       integrations.map((integration) =>
@@ -54,54 +45,31 @@ export const installIntegrationPlugins = async function ({
       ),
     )
   ).filter(Boolean)
-  logInstallIntegrations(
-    logs,
-    integrations.filter((integration) =>
-      integrationsToBuild.every((compiledIntegration) => integration.slug !== compiledIntegration.slug),
-    ),
-  )
+  logInstallIntegrations(logs, integrations)
 
   if (packages.length === 0) {
     return
   }
 
   await createAutoPluginsDir(logs, autoPluginsDir)
-
   await addExactDependencies({ packageRoot: autoPluginsDir, isLocal: mode !== 'buildbot', packages })
 }
 
-const getIntegrationPackage = async function ({
-  integration: { version, dev },
-  context,
-  testOpts = {},
-  buildDir,
-  pluginsEnv,
-}) {
-  if (typeof version !== 'undefined') {
-    return `${version}/packages/buildhooks.tgz`
-  }
-
-  if (typeof dev !== 'undefined' && context === 'dev') {
-    const { path } = dev
-
-    const integrationDir = testOpts.cwd ? resolve(testOpts.cwd, path) : resolve(buildDir, path)
-
-    try {
-      const res = await execa('npm', ['run', 'build'], { cwd: integrationDir, env: pluginsEnv })
-
-      // This is horrible and hacky, but `npm run build` will
-      // return status code 0 even if it fails
-      if (!res.stdout.includes('Build complete!')) {
-        throw new Error(res.stdout)
-      }
-    } catch (e) {
-      throw new Error(`Failed to build integration. Error:\n\n${e.stack}`)
-    }
-
+const getIntegrationPackage = async function ({ integration: { buildPlugin } }) {
+  if (buildPlugin === null) {
     return undefined
   }
 
-  return undefined
+  switch (buildPlugin.packageURL.protocol) {
+    case 'http:':
+    // fallthrough
+    case 'https:':
+    // fallthrough
+    case 'file:':
+      return buildPlugin.packageURL.toString()
+    default:
+      throw new Error(`unsupported buildhooks package URL: ${buildPlugin.packageURL.toString()}`)
+  }
 }
 
 // We pin the version without using semver ranges ^ nor ~

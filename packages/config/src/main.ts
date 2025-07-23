@@ -189,6 +189,7 @@ export const resolveConfig = async function (opts): Promise<Config> {
   const mergedExtensions = mergeExtensions({
     apiExtensions: updatedExtensions,
     configExtensions: configA.integrations,
+    buildDir,
     context,
   })
 
