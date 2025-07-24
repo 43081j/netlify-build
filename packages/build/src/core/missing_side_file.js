@@ -1,6 +1,5 @@
+import { existsSync } from 'fs'
 import { relative } from 'path'
-
-import { pathExists } from 'path-exists'
 
 import { logMissingSideFile } from '../log/messages/core.js'
 
@@ -21,7 +20,7 @@ export const warnOnMissingSideFiles = async function ({
 const SIDE_FILES = ['_headers', '_redirects']
 
 const warnOnMissingSideFile = async function ({ logs, sideFile, buildDir, publish }) {
-  if (!(await pathExists(`${buildDir}/${sideFile}`)) || (await pathExists(`${publish}/${sideFile}`))) {
+  if (!existsSync(`${buildDir}/${sideFile}`) || existsSync(`${publish}/${sideFile}`)) {
     return
   }
 

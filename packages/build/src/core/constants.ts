@@ -1,8 +1,8 @@
+import { existsSync } from 'fs'
 import { relative, normalize, join } from 'path'
 
 import { getCacheDir } from '@netlify/cache-utils'
 import mapObj from 'map-obj'
-import { pathExists } from 'path-exists'
 
 import { ROOT_PACKAGE_JSON } from '../utils/json.js'
 
@@ -144,7 +144,7 @@ const INTERNAL_FUNCTIONS_SRC = '.netlify/functions-internal'
 // Retrieve constants which might change during the build if a plugin modifies
 // `netlifyConfig` or creates some default directories.
 // Unlike readonly constants, this is called again before each build step.
-export const addMutableConstants = async function ({
+export const addMutableConstants = function ({
   constants,
   buildDir,
   netlifyConfig: {
@@ -161,9 +161,9 @@ export const addMutableConstants = async function ({
     // The directory where Edge Functions source code lives
     EDGE_FUNCTIONS_SRC: edgeFunctions,
   }
-  const constantsB = await addDefaultConstants(constantsA, buildDir)
+  const constantsB = addDefaultConstants(constantsA, buildDir)
   const constantsC = normalizeConstantsPaths(constantsB, buildDir)
-  return constantsC
+  return Promise.resolve(constantsC)
 }
 
 // Some `constants` have a default value when a specific file exists.
@@ -171,11 +171,9 @@ export const addMutableConstants = async function ({
 // command or plugins might create those specific files, in which case, the
 // related `constant` should be updated, unless the user has explicitly
 // configured it.
-const addDefaultConstants = async function (constants, buildDir) {
-  const newConstants = await Promise.all(
-    DEFAULT_PATHS.map(({ constantName, defaultPath }) =>
-      addDefaultConstant({ constants, constantName, defaultPath, buildDir }),
-    ),
+const addDefaultConstants = function (constants, buildDir) {
+  const newConstants = DEFAULT_PATHS.map(({ constantName, defaultPath }) =>
+    addDefaultConstant({ constants, constantName, defaultPath, buildDir }),
   )
   return Object.assign({}, constants, ...newConstants)
 }
@@ -189,9 +187,9 @@ const DEFAULT_PATHS = [
   { constantName: 'EDGE_FUNCTIONS_SRC', defaultPath: 'netlify/edge-functions' },
 ]
 
-const addDefaultConstant = async function ({ constants, constantName, defaultPath, buildDir }) {
+const addDefaultConstant = function ({ constants, constantName, defaultPath, buildDir }) {
   // Configuration paths are relative to the build directory.
-  if (!isEmptyValue(constants[constantName]) || !(await pathExists(`${buildDir}/${defaultPath}`))) {
+  if (!isEmptyValue(constants[constantName]) || !existsSync(`${buildDir}/${defaultPath}`)) {
     return {}
   }
 

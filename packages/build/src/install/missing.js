@@ -1,8 +1,7 @@
-import { promises as fs } from 'fs'
+import { promises as fs, existsSync } from 'fs'
 import { normalize, resolve } from 'path'
 
 import { execa } from 'execa'
-import { pathExists } from 'path-exists'
 import { isFile } from 'path-type'
 
 import { logArray, logSubHeader } from '../log/logger.js'
@@ -116,7 +115,7 @@ const createAutoPluginsDir = async function (logs, autoPluginsDir) {
 
 // Create the directory if it does not exist
 const ensureDir = async function (logs, autoPluginsDir) {
-  if (await pathExists(autoPluginsDir)) {
+  if (existsSync(autoPluginsDir)) {
     return
   }
 
@@ -132,7 +131,7 @@ const ensureDir = async function (logs, autoPluginsDir) {
 // Create a dummy `package.json` so we can run `npm install` and get a lock file
 const createPackageJson = async function (autoPluginsDir) {
   const packageJsonPath = `${autoPluginsDir}/package.json`
-  if (await pathExists(packageJsonPath)) {
+  if (existsSync(packageJsonPath)) {
     return
   }
 

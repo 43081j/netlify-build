@@ -1,7 +1,7 @@
+import { existsSync } from 'fs'
 import { resolve } from 'path'
 
 import { type NodeBundlerName, RUNTIME, zipFunctions, type FunctionResult } from '@netlify/zip-it-and-ship-it'
-import { pathExists } from 'path-exists'
 
 import { addErrorInfo } from '../../error/info.js'
 import { log } from '../../log/logger.js'
@@ -146,9 +146,9 @@ const coreStep = async function ({
   const functionsSrc = relativeFunctionsSrc === undefined ? undefined : resolve(buildDir, relativeFunctionsSrc)
   const functionsDist = resolve(buildDir, relativeFunctionsDist)
   const internalFunctionsSrc = resolve(buildDir, relativeInternalFunctionsSrc)
-  const internalFunctionsSrcExists = await pathExists(internalFunctionsSrc)
+  const internalFunctionsSrcExists = existsSync(internalFunctionsSrc)
   const frameworkFunctionsSrc = resolve(buildDir, packagePath || '', FRAMEWORKS_API_FUNCTIONS_ENDPOINT)
-  const frameworkFunctionsSrcExists = await pathExists(frameworkFunctionsSrc)
+  const frameworkFunctionsSrcExists = existsSync(frameworkFunctionsSrc)
   const functionsSrcExists = await validateFunctionsSrc({ functionsSrc, relativeFunctionsSrc })
   const [userFunctions = [], internalFunctions = [], frameworkFunctions = []] = await getUserAndInternalFunctions({
     featureFlags,
@@ -236,13 +236,13 @@ const hasFunctionsDirectories = async function ({
 
   const internalFunctionsSrc = resolve(buildDir, INTERNAL_FUNCTIONS_SRC)
 
-  if (await pathExists(internalFunctionsSrc)) {
+  if (existsSync(internalFunctionsSrc)) {
     return true
   }
 
   const frameworkFunctionsSrc = resolve(buildDir, packagePath || '', FRAMEWORKS_API_FUNCTIONS_ENDPOINT)
 
-  if (await pathExists(frameworkFunctionsSrc)) {
+  if (existsSync(frameworkFunctionsSrc)) {
     return true
   }
 

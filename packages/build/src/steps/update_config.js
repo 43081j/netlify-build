@@ -1,7 +1,5 @@
+import { existsSync } from 'fs'
 import { isDeepStrictEqual } from 'util'
-
-import pFilter from 'p-filter'
-import { pathExists } from 'path-exists'
 
 import { resolveUpdatedConfig } from '../core/config.js'
 import { addErrorInfo } from '../error/info.js'
@@ -81,7 +79,7 @@ const haveConfigSideFilesChanged = async function (configSideFiles, headersPath,
 // sometimes have higher priority and should therefore be deleted in order to
 // apply any configuration update on `netlify.toml`.
 export const listConfigSideFiles = async function (sideFiles) {
-  const configSideFiles = await pFilter(sideFiles, pathExists)
+  const configSideFiles = sideFiles.filter(existsSync)
 
   return configSideFiles.sort()
 }

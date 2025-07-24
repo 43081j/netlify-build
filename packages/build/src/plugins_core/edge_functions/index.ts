@@ -1,8 +1,7 @@
-import { promises as fs } from 'fs'
+import { promises as fs, existsSync } from 'fs'
 import { dirname, join, resolve } from 'path'
 
 import { bundle, find } from '@netlify/edge-bundler'
-import { pathExists } from 'path-exists'
 
 import { Metric } from '../../core/report_metrics.js'
 import { log, reduceLogLines } from '../../log/logger.js'
@@ -55,7 +54,7 @@ const coreStep = async function ({
   const frameworksAPISrcPath = resolve(buildDir, packagePath || '', FRAMEWORKS_API_EDGE_FUNCTIONS_ENDPOINT)
   const generatedFunctionPaths = [internalSrcPath]
 
-  if (await pathExists(frameworksAPISrcPath)) {
+  if (existsSync(frameworksAPISrcPath)) {
     generatedFunctionPaths.push(frameworksAPISrcPath)
   }
 
@@ -66,7 +65,7 @@ const coreStep = async function ({
     FRAMEWORKS_API_EDGE_FUNCTIONS_IMPORT_MAP,
   )
 
-  if (await pathExists(frameworkImportMap)) {
+  if (existsSync(frameworkImportMap)) {
     importMapPaths.push(frameworkImportMap)
   }
 
@@ -153,7 +152,7 @@ const getMetrics = (manifest): Metric[] => {
 // one configured by the user or the internal one) exists. We use a dynamic
 // `condition` because the directories might be created by the build command
 // or plugins.
-const hasEdgeFunctionsDirectories = async function ({
+const hasEdgeFunctionsDirectories = function ({
   buildDir,
   constants: { INTERNAL_EDGE_FUNCTIONS_SRC, EDGE_FUNCTIONS_SRC },
   packagePath,
@@ -161,18 +160,18 @@ const hasEdgeFunctionsDirectories = async function ({
   const hasFunctionsSrc = EDGE_FUNCTIONS_SRC !== undefined && EDGE_FUNCTIONS_SRC !== ''
 
   if (hasFunctionsSrc) {
-    return true
+    return Promise.resolve(true)
   }
 
   const internalFunctionsSrc = resolve(buildDir, INTERNAL_EDGE_FUNCTIONS_SRC)
 
-  if (await pathExists(internalFunctionsSrc)) {
-    return true
+  if (existsSync(internalFunctionsSrc)) {
+    return Promise.resolve(true)
   }
 
   const frameworkFunctionsSrc = resolve(buildDir, packagePath || '', FRAMEWORKS_API_EDGE_FUNCTIONS_ENDPOINT)
 
-  return await pathExists(frameworkFunctionsSrc)
+  return Promise.resolve(existsSync(frameworkFunctionsSrc))
 }
 
 const logFunctions = async ({
@@ -191,7 +190,7 @@ const logFunctions = async ({
   srcPath?: string
 }): Promise<void> => {
   const [userFunctionsSrcExists, userFunctions, internalFunctions, frameworkFunctions] = await Promise.all([
-    srcPath ? pathExists(srcPath) : Promise.resolve(false),
+    srcPath ? Promise.resolve(existsSync(srcPath)) : Promise.resolve(false),
     srcPath ? find([srcPath]) : Promise.resolve([]),
     find([internalSrcPath]),
     frameworksAPISrcPath ? find([frameworksAPISrcPath]) : Promise.resolve([]),

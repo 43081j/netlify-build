@@ -1,6 +1,5 @@
+import { existsSync } from 'fs'
 import { cwd as getCwd } from 'process'
-
-import { pathExists } from 'path-exists'
 
 import { ErrorParam } from '../core/types.js'
 import { logBuildError } from '../log/messages/core.js'
@@ -48,7 +47,7 @@ const isCancelCrash = async function (error) {
     // Otherwise bugs due to (for example) the build command removing
     // `process.cwd` are currently not logged/reported.
     const cwd = getCwd()
-    return !(await pathExists(cwd))
+    return !existsSync(cwd)
     // `process.cwd()` fails when the current directory does not exist
   } catch {
     return true

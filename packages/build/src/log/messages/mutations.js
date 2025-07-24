@@ -1,7 +1,5 @@
-import { promises as fs } from 'fs'
+import { promises as fs, existsSync } from 'fs'
 import { inspect } from 'util'
-
-import { pathExists } from 'path-exists'
 
 import { log, logMessage, logSubHeader } from '../logger.js'
 
@@ -51,7 +49,7 @@ export const logConfigOnUpload = async function ({ logs, configPath, debug }) {
 
   logSubHeader(logs, 'Uploaded config')
 
-  if (!(await pathExists(configPath))) {
+  if (!existsSync(configPath)) {
     logMessage(logs, 'No netlify.toml')
     return
   }
@@ -67,7 +65,7 @@ export const logHeadersOnUpload = async function ({ logs, headersPath, debug }) 
 
   logSubHeader(logs, 'Uploaded headers')
 
-  if (!(await pathExists(headersPath))) {
+  if (!existsSync(headersPath)) {
     logMessage(logs, 'No headers')
     return
   }
@@ -83,7 +81,7 @@ export const logRedirectsOnUpload = async function ({ logs, redirectsPath, debug
 
   logSubHeader(logs, 'Uploaded redirects')
 
-  if (!(await pathExists(redirectsPath))) {
+  if (!existsSync(redirectsPath)) {
     logMessage(logs, 'No redirects\n')
     return
   }

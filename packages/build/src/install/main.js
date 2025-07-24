@@ -1,7 +1,7 @@
+import { existsSync } from 'fs'
 import { homedir } from 'os'
 
 import { execa } from 'execa'
-import { pathExists } from 'path-exists'
 
 import { addErrorInfo } from '../error/info.js'
 
@@ -44,7 +44,7 @@ const getManager = async function (type, packageRoot) {
     return 'npm'
   }
 
-  if (await pathExists(`${packageRoot}/yarn.lock`)) {
+  if (existsSync(`${packageRoot}/yarn.lock`)) {
     return 'yarn'
   }
 

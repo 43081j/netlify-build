@@ -1,11 +1,10 @@
-import { promises as fs } from 'fs'
+import { promises as fs, existsSync } from 'fs'
 import { join } from 'path'
 import { platform } from 'process'
 import { fileURLToPath } from 'url'
 
 import { Fixture, normalizeOutput } from '@netlify/testing'
 import test from 'ava'
-import { pathExists } from 'path-exists'
 import tmp from 'tmp-promise'
 
 import { importJsonFile } from '../../lib/utils/json.js'
@@ -16,16 +15,16 @@ const assertManifest = async (t, fixtureName) => {
   const distPath = join(FIXTURES_DIR, fixtureName, '.netlify', 'edge-functions-dist')
   const manifestPath = join(distPath, 'manifest.json')
 
-  t.true(await pathExists(manifestPath))
+  t.true(existsSync(manifestPath))
 
   const manifestFile = await fs.readFile(manifestPath, 'utf8')
   const manifest = JSON.parse(manifestFile)
 
   await Promise.all(
-    manifest.bundles.map(async (bundle) => {
+    manifest.bundles.map((bundle) => {
       const bundlePath = join(distPath, bundle.asset)
 
-      t.true(await pathExists(bundlePath))
+      t.true(existsSync(bundlePath))
     }),
   )
 
@@ -201,8 +200,8 @@ test.serial('cleans up the edge functions dist directory before bundling', async
   await fs.writeFile(oldBundlePath, 'some-data')
   await fs.writeFile(manifestPath, '{}')
 
-  t.true(await pathExists(oldBundlePath))
-  t.true(await pathExists(manifestPath))
+  t.true(existsSync(oldBundlePath))
+  t.true(existsSync(manifestPath))
 
   await fixture.withFlags({ debug: false, mode: 'buildbot' }).runWithBuild()
 
@@ -211,7 +210,7 @@ test.serial('cleans up the edge functions dist directory before bundling', async
   t.is(manifest.bundles.length, 1)
   t.not(manifest.bundles[0].asset, 'old.eszip')
 
-  t.false(await pathExists(oldBundlePath))
+  t.false(existsSync(oldBundlePath))
 })
 
 test.serial('builds edge functions generated with the Frameworks API', async (t) => {
