@@ -1,13 +1,11 @@
 import { env } from 'process'
 
-import { includeKeys } from 'filter-obj'
-
 // Retrieve environment variables used in error monitoring
 export const getEnvMetadata = function (childEnv = env) {
-  return includeKeys(childEnv, isEnvMetadata)
+  return Object.fromEntries(Object.entries(childEnv).filter(isEnvMetadata))
 }
 
-const isEnvMetadata = function (name) {
+const isEnvMetadata = function ([name]) {
   return ENVIRONMENT_VARIABLES.has(name)
 }
 
