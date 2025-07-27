@@ -148,7 +148,7 @@ export class Nx extends BaseBuildTool {
 
   private async getOutputFromTarget(packagePath: string): Promise<string | null> {
     // dynamic import out of performance reasons on the react UI
-    const { getProperty } = await import('dot-prop')
+    const { default: getProperty } = await import('dlv')
     try {
       const target = this.targets.get(packagePath)?.find((t) => t.name === 'build')
       if (target) {
