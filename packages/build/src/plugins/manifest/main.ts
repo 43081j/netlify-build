@@ -1,4 +1,4 @@
-import { type PackageJson } from 'read-package-up'
+import { type PackageJson } from 'pkg-types'
 
 import { addPluginLoadErrorStatus } from '../../status/load_error.js'
 

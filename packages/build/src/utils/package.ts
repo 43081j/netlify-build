@@ -1,6 +1,7 @@
 import { dirname } from 'path'
 
-import { type Options, type PackageJson, readPackageUp } from 'read-package-up'
+import { type PackageJson, readPackageJSON } from 'pkg-types'
+import { up as findPackageUp } from 'empathic/package'
 
 type PackageResult = {
   packageJson: PackageJson
@@ -10,20 +11,18 @@ type PackageResult = {
 /**
  * Retrieve `package.json` from a specific directory
  */
-export const getPackageJson = async function (cwd: string, options: Omit<Options, 'cwd'> = {}): Promise<PackageResult> {
+export const getPackageJson = async function (cwd: string): Promise<PackageResult> {
   const result: PackageResult = {
     packageJson: {},
   }
 
   try {
-    const readResult = await readPackageUp({
-      cwd,
-      ...Object.assign({ normalize: true }, options),
-    })
+    const packagePath = findPackageUp({ cwd })
+    if (packagePath) {
+      const readResult = await readPackageJSON(packagePath)
 
-    if (readResult) {
-      result.packageJson = readResult.packageJson
-      result.packageDir = dirname(readResult.path)
+      result.packageJson = readResult
+      result.packageDir = dirname(packagePath)
     }
   } catch {
     // continue regardless error

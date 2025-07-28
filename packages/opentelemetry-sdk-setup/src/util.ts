@@ -3,7 +3,8 @@ import { readFile, realpath } from 'node:fs/promises'
 
 import { diag, type DiagLogger } from '@opentelemetry/api'
 import { parseKeyPairsIntoRecord } from '@opentelemetry/core/build/src/baggage/utils.js'
-import { type PackageJson, readPackageUp } from 'read-package-up'
+import { type PackageJson, readPackageJSON } from 'pkg-types'
+import { up as findPackageUp } from 'empathic/package'
 
 /**
  * Builds a function for logging data to a provided fileDescriptor (i.e. hidden from
@@ -92,10 +93,12 @@ export const findExecutablePackageJSON = async function (path: string): Promise<
   }
 
   try {
-    const result = await readPackageUp({ cwd: pathToSearch, normalize: false })
-    if (result === undefined) return {}
-    const { packageJson } = result
-    return packageJson
+    const packagePath = findPackageUp({ cwd: pathToSearch })
+    if (packagePath === undefined) {
+      return {}
+    }
+    const result = await readPackageJSON(packagePath)
+    return result
   } catch {
     // packageJson read failed, we ignore the error and return an empty obj
     return {}
