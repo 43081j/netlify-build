@@ -1,10 +1,9 @@
-import { promises as fs, Stats } from 'fs'
+import { existsSync, promises as fs, Stats } from 'fs'
 import { basename, dirname, join } from 'path'
 
 import cpy from 'cpy'
 import { type Options, globby } from 'globby'
 import { isNotJunk } from 'junk'
-import { moveFile } from 'move-file'
 
 /**
  * Move or copy a cached file/directory from/to a local one
@@ -15,7 +14,12 @@ import { moveFile } from 'move-file'
 export const moveCacheFile = async function (src: string, dest: string, move = false) {
   // Moving is faster but removes the source files locally
   if (move) {
-    return moveFile(src, dest, { overwrite: false })
+    if (!existsSync(dest)) {
+      await fs.mkdir(dirname(dest), { recursive: true })
+      await fs.copyFile(src, dest)
+      await fs.unlink(src)
+    }
+    return
   }
 
   const { srcGlob, dest: matchedDest, ...options } = await getSrcAndDest(src, dirname(dest))
