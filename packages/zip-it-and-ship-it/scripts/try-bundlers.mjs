@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process'
 import { rmSync, mkdirSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parseArgs } from 'node:util'
+import { parseArgs, styleText } from 'node:util'
 
 import { zipFunction } from '../dist/main.js'
 
@@ -33,13 +33,13 @@ const BUNDLERS = ['esbuild', 'nft', 'zisi', 'none']
 const { values: args } = parseArgs({
   options: {
     fixture: { type: 'string' },
-    bundler: { type: 'string' },
+    bundler: { type: 'string', multiple: true },
     keep: { type: 'boolean', default: false },
   },
 })
 
 const fixtures = args.fixture ? FIXTURES.filter((f) => f.name === args.fixture) : FIXTURES
-const bundlers = args.bundler ? BUNDLERS.filter((b) => b === args.bundler) : BUNDLERS
+const bundlers = args.bundler ? BUNDLERS.filter((b) => args.bundler.includes(b)) : BUNDLERS
 
 if (fixtures.length === 0) {
   console.error(`Unknown fixture: ${args.fixture}. Known: ${FIXTURES.map((f) => f.name).join(', ')}`)
@@ -58,13 +58,13 @@ console.log(`output dir: ${outRoot}\n`)
 
 for (const fixture of fixtures) {
   const srcPath = join(FIXTURES_ROOT, fixture.path, fixture.entry)
-  console.log(`=== fixture: ${fixture.name}  (${srcPath.replace(PKG_ROOT, '.')})`)
+  console.log(`${styleText(['bold', 'bgWhite', 'black'], fixture.name)} (${srcPath.replace(PKG_ROOT, '.')})`);
 
   for (const bundler of bundlers) {
     const destFolder = join(outRoot, fixture.name, bundler)
     mkdirSync(destFolder, { recursive: true })
 
-    process.stdout.write(`  [${bundler.padEnd(7)}] `)
+    console.log(`// ${styleText(['bgGreen', 'black'], bundler)}`);
 
     try {
       const result = await zipFunction(srcPath, destFolder, {
@@ -78,8 +78,10 @@ for (const fixture of fixtures) {
       }
 
       const size = statSync(result.path).size
-      console.log(`ok  ${(size / 1024).toFixed(1)} KiB  ${result.path.replace(outRoot, '.')}`)
-      console.log(`           entry=${result.entryFilename}  bundler=${result.bundler}`)
+      console.log(`size: ${(size / 1024).toFixed(1)} KiB`);
+      console.log(`path: ${result.path.replace(outRoot, '.')}`);
+      console.log(`entry: ${result.entryFilename}`);
+      console.log(`bundler: ${result.bundler}`);
 
       if (args.keep) {
         const unpacked = join(destFolder, 'unpacked')
@@ -87,11 +89,15 @@ for (const fixture of fixtures) {
         try {
           execSync(`unzip -qq -o "${result.path}" -d "${unpacked}"`)
           const files = listAll(unpacked).map((p) => p.replace(unpacked + '/', ''))
-          console.log(`           files (${files.length}):`)
-          for (const f of files.slice(0, 20)) console.log(`             - ${f}`)
-          if (files.length > 20) console.log(`             ... and ${files.length - 20} more`)
+          console.log(`files: (${files.length}):`)
+          for (const f of files.slice(0, 20)) {
+            console.log(`- ${f}`);
+          }
+          if (files.length > 20) {
+            console.log(`... and ${files.length - 20} more`)
+          }
         } catch (e) {
-          console.log(`           (unzip failed: ${e.message})`)
+          console.log(`(unzip failed: ${e.message})`)
         }
       }
     } catch (err) {
