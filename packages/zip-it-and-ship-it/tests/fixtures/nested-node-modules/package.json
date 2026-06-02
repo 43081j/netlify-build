@@ -1,0 +1,8 @@
+{
+  "name": "nested-node-modules",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "outer": "1.0.0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "pkg-exports",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "exports-pkg": "1.0.0"
+  }
+}

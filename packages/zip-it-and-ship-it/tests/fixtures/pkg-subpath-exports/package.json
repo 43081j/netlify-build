@@ -1,0 +1,8 @@
+{
+  "name": "pkg-subpath-exports",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "subpath-pkg": "1.0.0"
+  }
+}
