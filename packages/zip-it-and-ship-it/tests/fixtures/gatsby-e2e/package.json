@@ -1,0 +1,28 @@
+{
+  "name": "adapters",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E2E test site for testing official adapters",
+  "author": "LekoArts",
+  "scripts": {
+    "develop": "gatsby develop",
+    "build": "gatsby build --prefix-paths",
+    "serve": "gatsby serve",
+    "clean": "gatsby clean"
+  },
+  "dependencies": {
+    "gatsby": "next",
+    "gatsby-adapter-netlify": "next",
+    "gatsby-plugin-image": "next",
+    "gatsby-plugin-sharp": "next",
+    "gatsby-transformer-sharp": "next",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "resolutions": {
+    "unstorage": "1.17.3"
+  }
+}
