@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process'
 import { rmSync, mkdirSync, readdirSync, statSync } from 'node:fs'
+import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs, styleText } from 'node:util'
@@ -24,6 +25,11 @@ const FIXTURES = [
   {
     name: 'gatsby-starter',
     path: 'gatsby-starter',
+    entry: '.netlify/functions-internal/ssr-engine/ssr-engine.js',
+  },
+  {
+    name: 'gatsby-e2e',
+    path: 'gatsby-e2e',
     entry: '.netlify/functions-internal/ssr-engine/ssr-engine.js',
   },
 ]
@@ -58,6 +64,13 @@ console.log(`output dir: ${outRoot}\n`)
 
 for (const fixture of fixtures) {
   const srcPath = join(FIXTURES_ROOT, fixture.path, fixture.entry)
+  const configPath = join(FIXTURES_ROOT, fixture.path, fixture.entry.replace(/\.js$/, '.json'));
+  let config = {};
+  try {
+    ({config} = JSON.parse(await readFile(configPath, 'utf8')));
+  } catch {
+    // do nothing
+  }
   console.log(`${styleText(['bold', 'bgWhite', 'black'], fixture.name)} (${srcPath.replace(PKG_ROOT, '.')})`);
 
   for (const bundler of bundlers) {
@@ -67,9 +80,10 @@ for (const fixture of fixtures) {
     console.log(`// ${styleText(['bgGreen', 'black'], bundler)}`);
 
     try {
+      config.nodeBundler = bundler;
       const result = await zipFunction(srcPath, destFolder, {
         basePath: join(FIXTURES_ROOT, fixture.path),
-        config: { '*': { nodeBundler: bundler } },
+        config: {'*': config}
       })
 
       if (!result) {
