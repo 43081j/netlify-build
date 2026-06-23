@@ -1,7 +1,8 @@
 import { existsSync } from 'fs'
 import { resolve, relative, parse, join } from 'path'
 
-import { getProperty, setProperty, deleteProperty } from 'dot-prop'
+import { dset } from 'dset'
+import dlv from 'dlv'
 
 import { throwUserError } from './error.js'
 import { mergeConfigs } from './merge.js'
@@ -66,14 +67,17 @@ const resolvePaths = function ({
 }
 
 const resolvePathProp = function (config: $TSFixMe, propName: string, baseRel: string, repositoryRoot: string) {
-  const path = getProperty(config, propName) as string | undefined
+  const path = dlv(config, propName) as string | undefined
 
   if (!isTruthy(path)) {
-    deleteProperty(config, propName)
+    const dotIndex = propName.lastIndexOf('.')
+    const parentObj = dotIndex === -1 ? config : dlv(config, propName.slice(0, dotIndex))
+    const childName = dotIndex === -1 ? propName : propName.slice(dotIndex)
+    delete parentObj[childName]
     return config
   }
 
-  return setProperty(config, propName, resolvePath(repositoryRoot, baseRel, path, propName))
+  return dset(config, propName, resolvePath(repositoryRoot, baseRel, path, propName))
 }
 
 export const resolvePath = (repositoryRoot: string, baseRel: string, originalPath: string, propName: string) => {

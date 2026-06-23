@@ -1,5 +1,4 @@
 import isPlainObj from 'is-plain-obj'
-import mapObj from 'map-obj'
 
 import { removeFalsy } from './utils/remove_falsy.js'
 
@@ -46,7 +45,7 @@ const simplifyEnvironment = function (environment) {
 }
 
 const simplifyContexts = function (contextProps) {
-  return mapObj(contextProps, simplifyContextProps)
+  return Object.fromEntries(Object.entries(contextProps).map(([key, value]) => simplifyContextProps(key, value)))
 }
 
 const simplifyContextProps = function (context, contextConfig) {

@@ -1,4 +1,4 @@
-import { styleText } from 'node:util';
+import { styleText } from 'node:util'
 
 // Color theme. Please use this instead of requiring chalk directly, to ensure
 // consistent colors.

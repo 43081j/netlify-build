@@ -1,7 +1,6 @@
 import { resolve } from 'path'
 import process from 'process'
-
-import { isDirectory } from 'path-type'
+import { stat } from 'node:fs/promises'
 
 import { throwUserError } from '../error.js'
 import { getBufferLogs } from '../log/logger.js'
@@ -105,7 +104,14 @@ const DIR_OPTIONS = ['cwd', 'repositoryRoot']
 const normalizeDir = async function (opts, optName) {
   const path = opts[optName]
   const resolvedPath = resolve(path)
-  if (!(await isDirectory(path))) {
+  let isDir
+  try {
+    const pathStat = await stat(path)
+    isDir = pathStat.isDirectory()
+  } catch {
+    isDir = false
+  }
+  if (!isDir) {
     throwUserError(`Option '${optName}' points to a non-existing directory: ${resolvedPath}`)
   }
   return { [optName]: resolvedPath }

@@ -1,4 +1,4 @@
-import { isDirectory } from 'path-type'
+import { stat } from 'node:fs/promises'
 
 import { throwUserError } from './error.js'
 
@@ -22,7 +22,13 @@ export const getBuildDir = async function (repositoryRoot: string, base?: string
  * `buildDir` when it is the base directory instead.
  */
 const checkBuildDir = async function (buildDir: string, repositoryRoot: string) {
-  if (buildDir === repositoryRoot || (await isDirectory(buildDir))) {
+  let isDir: boolean
+  try {
+    isDir = (await stat(buildDir)).isDirectory()
+  } catch {
+    isDir = false
+  }
+  if (buildDir === repositoryRoot || isDir) {
     return
   }
 
