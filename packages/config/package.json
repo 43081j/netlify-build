@@ -62,7 +62,6 @@
     "@netlify/api": "^15.0.0",
     "@netlify/headers-parser": "^10.0.0",
     "@netlify/redirect-parser": "^16.0.0",
-    "chalk": "^5.0.0",
     "cron-parser": "^4.1.0",
     "deepmerge": "^4.2.2",
     "dot-prop": "^9.0.0",
@@ -90,7 +89,6 @@
     "c8": "^10.0.0",
     "has-ansi": "^6.0.0",
     "is-ci": "^4.0.0",
-    "tmp-promise": "^3.0.2",
     "typescript": "^5.0.0"
   },
   "engines": {

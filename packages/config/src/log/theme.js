@@ -1,14 +1,14 @@
-import chalk from 'chalk'
+import { styleText } from 'node:util';
 
 // Color theme. Please use this instead of requiring chalk directly, to ensure
 // consistent colors.
 export const THEME = {
   // Single lines used as subheaders
-  subHeader: chalk.cyan.bold,
+  subHeader: (str) => styleText(['cyan', 'bold'], str),
   // Single lines used as subheaders indicating an error
-  errorSubHeader: chalk.red.bold,
+  errorSubHeader: (str) => styleText(['red', 'bold'], str),
   // Same for warnings
-  warningLine: chalk.yellowBright,
+  warningLine: (str) => styleText('yellowBright', str),
   // One of several words that should be highlighted inside a line
-  highlightWords: chalk.cyan,
+  highlightWords: (str) => styleText('cyan', str),
 }
