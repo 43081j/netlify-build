@@ -5,7 +5,9 @@
   "exports": {
     ".": "./lib/index.js",
     "./lib/fixture.js": "./lib/fixture.js",
-    "./lib/normalize.js": "./lib/normalize.js"
+    "./lib/normalize.js": "./lib/normalize.js",
+    "./lib/server.js": "./lib/server.js",
+    "./lib/dir.js": "./lib/dir.js"
   },
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
