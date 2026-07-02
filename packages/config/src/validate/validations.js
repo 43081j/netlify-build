@@ -1,9 +1,9 @@
 import CronParser from 'cron-parser'
-import isPlainObj from 'is-plain-obj'
 import validateNpmPackageName from 'validate-npm-package-name'
 
 import { validations as edgeFunctionValidations } from '../edge_functions.js'
 import { bundlers, WILDCARD_ALL as FUNCTIONS_CONFIG_WILDCARD_ALL } from '../functions_config.js'
+import { isPlainObj } from '../utils/is_plain_obj.js'
 
 import { functionsDirectoryCheck, isArrayOfObjects, isArrayOfStrings, isString, validProperties } from './helpers.js'
 

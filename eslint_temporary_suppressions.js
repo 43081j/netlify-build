@@ -1690,6 +1690,18 @@ export default [
     },
   },
   {
+    files: ['packages/config/src/utils/set.js'],
+    rules: {
+      'n/no-missing-import': 'off',
+    },
+  },
+  {
+    files: ['packages/config/src/validate/helpers.js'],
+    rules: {
+      'n/no-missing-import': 'off',
+    },
+  },
+  {
     files: ['packages/config/src/validate/identical.js'],
     rules: {
       'n/no-missing-import': 'off',
