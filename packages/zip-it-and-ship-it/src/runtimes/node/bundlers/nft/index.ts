@@ -8,6 +8,7 @@ import { FeatureFlags } from '../../../../feature_flags.js'
 import type { RuntimeCache } from '../../../../utils/cache.js'
 import { cachedReadFile, getPathWithExtension } from '../../../../utils/fs.js'
 import { minimatch } from '../../../../utils/matching.js'
+import type { Logger } from '../../../../utils/logger.js'
 import { getBasePath } from '../../utils/base_path.js'
 import { filterExcludedPaths, getPathsOfIncludedFiles } from '../../utils/included_files.js'
 import { MODULE_FILE_EXTENSION, tsExtensions } from '../../utils/module_format.js'
@@ -25,6 +26,7 @@ const bundle: BundleFunction = async ({
   cache,
   config,
   featureFlags,
+  logger,
   mainFile,
   name,
   pluginsModulesPath,
@@ -67,6 +69,7 @@ const bundle: BundleFunction = async ({
     cache,
     config,
     featureFlags,
+    logger,
     mainFile,
     pluginsModulesPath,
     name,
@@ -114,6 +117,7 @@ const traceFilesAndTranspile = async function ({
   cache,
   config,
   featureFlags,
+  logger,
   mainFile,
   pluginsModulesPath,
   name,
@@ -124,6 +128,7 @@ const traceFilesAndTranspile = async function ({
   cache: RuntimeCache
   config: FunctionConfig
   featureFlags: FeatureFlags
+  logger: Logger
   mainFile: string
   pluginsModulesPath?: string
   name: string
@@ -155,6 +160,7 @@ const traceFilesAndTranspile = async function ({
           const { bundledPaths, transpiled } = await transform({
             bundle: transformer?.bundle,
             config,
+            logger,
             name,
             format: transformer?.format,
             path,
