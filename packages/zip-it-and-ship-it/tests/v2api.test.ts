@@ -11,6 +11,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { ARCHIVE_FORMAT } from '../src/archive.js'
 import { DEFAULT_NODE_VERSION } from '../src/runtimes/node/utils/node_version.js'
+import type { FunctionBundlingUserError } from '../src/utils/error.js'
 
 import { invokeLambda, readAsBuffer } from './helpers/lambda.js'
 import { zipFixture, unzipFiles, importFunctionFile, FIXTURES_ESM_DIR, FIXTURES_DIR } from './helpers/main.js'
@@ -381,6 +382,89 @@ describe('V2 functions API', () => {
     })
 
     expect(systemLog).not.toHaveBeenCalled()
+  })
+
+  test('Transpiles the function without bundling when esbuild cannot bundle a dynamic require', async () => {
+    const systemLog = vi.fn()
+
+    const { files } = await zipFixture('v2-api-dynamic-require-loader-error', {
+      fixtureDir: FIXTURES_ESM_DIR,
+      opts: {
+        config: {
+          '*': {
+            includedFiles: ['data/*.js'],
+          },
+        },
+        systemLog,
+      },
+    })
+
+    expect(systemLog).toHaveBeenCalledExactlyOnceWith(
+      expect.stringMatching(/Failed to bundle function 'function' with esbuild .+ transpiled it without bundling/),
+    )
+
+    const unzippedFunctions = await unzipFiles(files)
+
+    const func = await importFunctionFile(`${unzippedFunctions[0].unzipPath}/${files[0].entryFilename}`)
+    const { body: bodyStream, statusCode } = await invokeLambda(func)
+    const body = await readAsBuffer(bodyStream)
+
+    expect(statusCode).toBe(200)
+    expect(body).toBe('<h1>Hello world</h1>')
+  })
+
+  test('Bundles a function with a dynamic require of a directory containing a sourcemap', async () => {
+    const systemLog = vi.fn()
+
+    const { files } = await zipFixture('v2-api-dynamic-require-sourcemap', {
+      fixtureDir: FIXTURES_ESM_DIR,
+      opts: {
+        systemLog,
+      },
+    })
+
+    // Bundling succeeded, so the unbundled fallback never kicked in.
+    expect(systemLog).not.toHaveBeenCalled()
+
+    const unzippedFunctions = await unzipFiles(files)
+
+    const func = await importFunctionFile(`${unzippedFunctions[0].unzipPath}/${files[0].entryFilename}`)
+    const { body: bodyStream, statusCode } = await invokeLambda(func)
+    const body = await readAsBuffer(bodyStream)
+
+    expect(statusCode).toBe(200)
+    expect(body).toBe('<h1>Hello world</h1>')
+  })
+
+  test('Surfaces esbuild errors when bundling fails for a reason other than a missing loader', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {
+      // no-op
+    })
+    const systemLog = vi.fn()
+
+    try {
+      await zipFixture('v2-api-esbuild-error', {
+        fixtureDir: FIXTURES_ESM_DIR,
+        opts: {
+          systemLog,
+        },
+      })
+
+      expect.fail('Bundling should have thrown')
+    } catch (error) {
+      const { customErrorInfo } = error as FunctionBundlingUserError
+
+      expect(customErrorInfo.type).toBe('functionsBundling')
+      expect(customErrorInfo.location.bundler).toBe('nft')
+      expect(customErrorInfo.location.functionName).toBe('function')
+
+      // The initial build runs silently, so its errors must be emitted once
+      // the failure is known to be terminal.
+      expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('broken.js'))
+      expect(systemLog).not.toHaveBeenCalled()
+    } finally {
+      consoleError.mockRestore()
+    }
   })
 
   test('Extracts routes and excluded routes from the `path` and `excludedPath` properties', async () => {

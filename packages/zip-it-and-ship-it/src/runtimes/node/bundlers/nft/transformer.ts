@@ -137,7 +137,9 @@ export const transform = async ({ bundle = false, config, format, logger, name, 
       target: [nodeTarget],
       write: false,
     })
-    const bundledPaths = options.bundle ? Object.keys(transpiled.metafile.inputs).map((inputPath) => resolve(inputPath)) : []
+    const bundledPaths = options.bundle
+      ? Object.keys(transpiled.metafile.inputs).map((inputPath) => resolve(inputPath))
+      : []
 
     return { bundledPaths, transpiled: transpiled.outputFiles[0].text }
   }
