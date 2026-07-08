@@ -260,6 +260,34 @@ describe('V2 functions API', () => {
     },
   )
 
+  testMany(
+    'Handles a function with a top-level await when the project uses CommonJS',
+    ['bundler_default', 'bundler_esbuild', 'bundler_esbuild_zisi', 'bundler_default_nft', 'bundler_nft'],
+    async (options) => {
+      const { files, tmpDir } = await zipFixture('v2-api-cjs-top-level-await', {
+        fixtureDir: FIXTURES_ESM_DIR,
+        opts: merge(options, {
+          archiveFormat: ARCHIVE_FORMAT.NONE,
+        }),
+      })
+
+      for (const entry of files) {
+        expect(entry.bundler).toBe('nft')
+        expect(entry.runtimeAPIVersion).toBe(2)
+      }
+
+      const [{ name: archive, entryFilename }] = files
+
+      const func = await importFunctionFile(`${tmpDir}/${archive}/${entryFilename}`)
+      const { body: bodyStream, multiValueHeaders = {}, statusCode } = await invokeLambda(func)
+      const body = await readAsBuffer(bodyStream)
+
+      expect(body).toBe('<h1>Hello world from top-level await</h1>')
+      expect(multiValueHeaders['content-type']).toEqual(['text/html'])
+      expect(statusCode).toBe(200)
+    },
+  )
+
   testMany('Handles a CJS TypeScript function that uses path aliases', ['bundler_default'], async (options) => {
     const { files, tmpDir } = await zipFixture('v2-api-cjs-ts-aliases', {
       fixtureDir: FIXTURES_ESM_DIR,
