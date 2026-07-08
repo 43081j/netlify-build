@@ -32,6 +32,16 @@ const FIXTURES = [
     path: 'gatsby-e2e',
     entry: '.netlify/functions-internal/ssr-engine/ssr-engine.js',
   },
+  {
+    name: 'gatsby-starter-v2',
+    path: 'gatsby-starter',
+    entry: 'functions-v2/ssr-engine.mjs',
+  },
+  {
+    name: 'gatsby-e2e-v2',
+    path: 'gatsby-e2e',
+    entry: 'functions-v2/ssr-engine.mjs',
+  },
 ]
 
 const BUNDLERS = ['esbuild', 'nft', 'zisi', 'none']
