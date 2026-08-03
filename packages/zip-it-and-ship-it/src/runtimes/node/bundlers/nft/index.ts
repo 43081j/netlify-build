@@ -1,4 +1,4 @@
-import { basename, dirname, extname, join, normalize, resolve } from 'path'
+import { basename, dirname, extname, join, normalize, resolve, sep } from 'path'
 
 import { nodeFileTrace } from '@vercel/nft'
 import resolveDependency from '@vercel/nft/out/resolve-dependency.js'
@@ -7,7 +7,6 @@ import type { FunctionConfig } from '../../../../config.js'
 import { FeatureFlags } from '../../../../feature_flags.js'
 import type { RuntimeCache } from '../../../../utils/cache.js'
 import { cachedReadFile, getPathWithExtension } from '../../../../utils/fs.js'
-import { minimatch } from '../../../../utils/matching.js'
 import { getBasePath } from '../../utils/base_path.js'
 import { filterExcludedPaths, getPathsOfIncludedFiles } from '../../utils/included_files.js'
 import { MODULE_FILE_EXTENSION, tsExtensions } from '../../utils/module_format.js'
@@ -96,17 +95,16 @@ const bundle: BundleFunction = async ({
   }
 }
 
+const awsIgnorePrefix = join('node_modules', 'aws-sdk') + sep
+const awsV3IgnorePrefix = join('node_modules', '@aws-sdk') + sep
+
 const getIgnoreFunction = (config: FunctionConfig) => {
   const nodeSupport = getNodeSupportMatrix(config.nodeVersion)
 
   // Paths that will be excluded from the tracing process.
-  const ignore = nodeSupport.awsSDKV3 ? ['node_modules/@aws-sdk/**'] : ['node_modules/aws-sdk/**']
+  const ignoredPrefix = nodeSupport.awsSDKV3 ? awsV3IgnorePrefix : awsIgnorePrefix
 
-  return (path: string) => {
-    const shouldIgnore = ignore.some((expression) => minimatch(path, expression))
-
-    return shouldIgnore
-  }
+  return (path: string) => path.startsWith(ignoredPrefix)
 }
 
 const traceFilesAndTranspile = async function ({
