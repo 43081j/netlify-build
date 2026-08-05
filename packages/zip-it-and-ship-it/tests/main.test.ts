@@ -1540,6 +1540,26 @@ describe('zip-it-and-ship-it', () => {
     }
   })
 
+  test('Throws a user error when the `zisi` bundler is selected via configuration', async () => {
+    try {
+      await zipFixture('simple', {
+        opts: { config: { '*': { nodeBundler: NODE_BUNDLER.ZISI } } },
+      })
+
+      expect.fail('Bundling should have thrown')
+    } catch (error) {
+      const { customErrorInfo } = error
+
+      expect(error.message).toBe(
+        'The `zisi` bundler no longer exists. Please remove the `node_bundler` property from your configuration or replace it with `esbuild` or `nft`.',
+      )
+      expect(customErrorInfo.type).toBe('functionsBundling')
+      expect(customErrorInfo.location.bundler).toBe('zisi')
+      expect(customErrorInfo.location.functionName).toBe('function')
+      expect(customErrorInfo.location.runtime).toBe('js')
+    }
+  })
+
   test('Bundles dynamic imports', async () => {
     const fixtureName = 'node-module-dynamic-import'
     await zipNode(fixtureName, {

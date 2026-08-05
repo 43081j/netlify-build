@@ -3,7 +3,7 @@ import { join } from 'path'
 import merge from 'deepmerge'
 import { describe, expect, test, vi } from 'vitest'
 
-import { listFunctionsFiles } from '../src/main.js'
+import { listFunctionsFiles, NODE_BUNDLER } from '../src/main.js'
 
 import { FIXTURES_DIR, normalizeFiles } from './helpers/main.js'
 import { allBundleConfigs, testMany } from './helpers/test_many.js'
@@ -78,5 +78,16 @@ describe('listFunctionsFiles', () => {
 
     expect(func.displayName).toBe('A Display Name')
     expect(func.generator).toBe('@netlify/mock-plugin@1.0.0')
+  })
+
+  test('Throws a user error when the `zisi` bundler is selected via configuration', async () => {
+    const fixtureDir = `${FIXTURES_DIR}/list`
+
+    await expect(
+      listFunctionsFiles(fixtureDir, {
+        basePath: fixtureDir,
+        config: { '*': { nodeBundler: NODE_BUNDLER.ZISI } },
+      }),
+    ).rejects.toThrowError('The `zisi` bundler no longer exists.')
   })
 })

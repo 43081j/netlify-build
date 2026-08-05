@@ -7,6 +7,7 @@ import { wrapTracer } from '@opentelemetry/api/experimental'
 import { INVOCATION_MODE } from '../../function.js'
 import { Priority } from '../../priority.js'
 import { getTrafficRulesConfig } from '../../rate_limit.js'
+import { FunctionBundlingUserError } from '../../utils/error.js'
 import getInternalValue from '../../utils/get_internal_value.js'
 import { GetSrcFilesFunction, Runtime, RUNTIME, ZipFunction, type ZipFunctionResult } from '../runtime.js'
 
@@ -23,7 +24,15 @@ import { getArchiveSize } from '../../utils/archive_size.js'
 
 // A proxy for the `getSrcFiles` that calls `getSrcFiles` on the bundler
 const getSrcFilesWithBundler: GetSrcFilesFunction = async (parameters) => {
-  const { config, extension, featureFlags, mainFile, runtimeAPIVersion, srcDir } = parameters
+  const { config, extension, featureFlags, mainFile, name, runtimeAPIVersion, srcDir } = parameters
+
+  if (config.nodeBundler === NODE_BUNDLER.ZISI) {
+    throw new FunctionBundlingUserError(
+      'The `zisi` bundler no longer exists. Please remove the `node_bundler` property from your configuration or replace it with `esbuild` or `nft`.',
+      { functionName: name, runtime: RUNTIME.JAVASCRIPT, bundler: NODE_BUNDLER.ZISI },
+    )
+  }
+
   const pluginsModulesPath = await getPluginsModulesPath(srcDir)
   const { name: bundlerName } = await getBundlerName({
     config,
@@ -223,6 +232,13 @@ const zipFunction: ZipFunction = async function ({
 }
 
 const zipWithFunctionWithFallback: ZipFunction = async ({ config = {}, ...parameters }) => {
+  if (config.nodeBundler === NODE_BUNDLER.ZISI) {
+    throw new FunctionBundlingUserError(
+      'The `zisi` bundler no longer exists. Please remove the `node_bundler` property from your configuration or replace it with `esbuild` or `nft`.',
+      { functionName: parameters.name, runtime: RUNTIME.JAVASCRIPT, bundler: NODE_BUNDLER.ZISI },
+    )
+  }
+
   const tracer = wrapTracer(trace.getTracer('zip-it-and-ship-it'))
 
   return tracer.withActiveSpan('function.bundle', async (span) => {
