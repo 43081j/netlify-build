@@ -17,6 +17,8 @@ const FIXTURES = [
   { name: 'node-module-and-local-imports', path: 'node-module-and-local-imports', entry: 'function.js' },
   { name: 'node-typescript', path: 'node-typescript', entry: 'function.ts' },
   { name: 'dynamic-require', path: 'dynamic-require', entry: 'function.js' },
+  { name: 'dynamic-concat-require', path: 'dynamic-concat', entry: 'require.js' },
+  { name: 'dynamic-concat-readfile', path: 'dynamic-concat', entry: 'read-file.js' },
   { name: 'conditional-require', path: 'conditional-require', entry: 'function.js' },
   { name: 'nested-node-modules', path: 'nested-node-modules', entry: 'function.js' },
   { name: 'pkg-exports', path: 'pkg-exports', entry: 'function.js' },
