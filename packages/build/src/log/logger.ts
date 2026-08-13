@@ -53,7 +53,7 @@ export const log = function (
 ) {
   const { indent = false, color } = config
   const stringA = indent ? indentString(string, INDENT_SIZE) : string
-  const stringB = String(stringA).replace(EMPTY_LINES_REGEXP, EMPTY_LINE)
+  const stringB = stringA.replace(EMPTY_LINES_REGEXP, EMPTY_LINE)
   const stringC = color === undefined ? stringB : color(stringB)
 
   if (logs && logs.outputFlusher) {
@@ -118,11 +118,6 @@ export const logObject = function (logs: Logs | undefined, object, opts) {
 // Print an array
 export const logArray = function (logs: Logs | undefined, array, opts = {}) {
   logMessage(logs, serializeIndentedArray(array), { color: THEME.none, ...opts })
-}
-
-// Print an array of errors
-export const logErrorArray = function (logs: Logs | undefined, array, opts = {}) {
-  logMessage(logs, serializeIndentedArray(array), { color: THEME.errorLine, ...opts })
 }
 
 // Print an array of warnings

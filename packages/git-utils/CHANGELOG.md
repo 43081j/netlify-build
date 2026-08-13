@@ -1,5 +1,23 @@
 # Changelog
 
+## [7.1.0](https://github.com/netlify/build/compare/git-utils-v7.0.0...git-utils-v7.1.0) (2026-07-17)
+
+
+### Features
+
+* trigger no-op releases with NPM Trusted Publishing ([#7131](https://github.com/netlify/build/issues/7131)) ([ec0cd90](https://github.com/netlify/build/commit/ec0cd90d524706f9442346da1d94885abae8a0c9))
+
+## [7.0.0](https://github.com/netlify/build/compare/git-utils-v6.0.4...git-utils-v7.0.0) (2026-06-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* end of support for Node.js v18 and v20 ([#7054](https://github.com/netlify/build/issues/7054))
+
+### Features
+
+* end of support for Node.js v18 and v20 ([#7054](https://github.com/netlify/build/issues/7054)) ([4358aa0](https://github.com/netlify/build/commit/4358aa0c0c5fedf482c48696305b0c707f3ea408))
+
 ## [6.0.4](https://github.com/netlify/build/compare/git-utils-v6.0.3...git-utils-v6.0.4) (2026-02-25)
 
 

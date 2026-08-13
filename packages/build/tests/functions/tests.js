@@ -1,6 +1,5 @@
 import { readdir, readFile, rm, stat, writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
-import { version as nodeVersion } from 'process'
 import { fileURLToPath } from 'url'
 
 import { Fixture, normalizeOutput, removeDir, getTempName, unzipFile } from '@netlify/testing'
@@ -8,36 +7,38 @@ import test from 'ava'
 import { pathExists } from 'path-exists'
 import semver from 'semver'
 
+import { trackBundleResults } from '../../lib/log/messages/core_steps.js'
+
 const FIXTURES_DIR = fileURLToPath(new URL('fixtures', import.meta.url))
 
 test('Functions: missing source directory', async (t) => {
-  const output = await new Fixture('./fixtures/missing').runWithBuild()
+  const output = await new Fixture(test.meta.file, './fixtures/missing').runWithBuild()
   t.snapshot(normalizeOutput(output))
 })
 
 test('Functions: must not be a regular file', async (t) => {
-  const output = await new Fixture('./fixtures/regular_file').runWithBuild()
+  const output = await new Fixture(test.meta.file, './fixtures/regular_file').runWithBuild()
   t.snapshot(normalizeOutput(output))
 })
 
 test('Functions: can be a symbolic link', async (t) => {
-  const output = await new Fixture('./fixtures/symlink').runWithBuild()
+  const output = await new Fixture(test.meta.file, './fixtures/symlink').runWithBuild()
   t.snapshot(normalizeOutput(output))
 })
 
 test('Functions: default directory', async (t) => {
-  const output = await new Fixture('./fixtures/default').runWithBuild()
+  const output = await new Fixture(test.meta.file, './fixtures/default').runWithBuild()
   t.snapshot(normalizeOutput(output))
 })
 
 test('Functions: simple setup', async (t) => {
   await removeDir(`${FIXTURES_DIR}/simple/.netlify/functions/`)
-  const output = await new Fixture('./fixtures/simple').runWithBuild()
+  const output = await new Fixture(test.meta.file, './fixtures/simple').runWithBuild()
   t.snapshot(normalizeOutput(output))
 })
 
 test('Functions: no functions', async (t) => {
-  const output = await new Fixture('./fixtures/none').runWithBuild()
+  const output = await new Fixture(test.meta.file, './fixtures/none').runWithBuild()
   t.snapshot(normalizeOutput(output))
 })
 
@@ -47,7 +48,7 @@ test('Functions: invalid package.json', async (t) => {
   // detecting an invalid *.json file.
   await writeFile(packageJsonPath, '{{}')
   try {
-    const output = await new Fixture('./fixtures/functions_package_json_invalid').runWithBuild()
+    const output = await new Fixture(test.meta.file, './fixtures/functions_package_json_invalid').runWithBuild()
     // This shape of this error can change with different Node.js versions.
     t.true(output.includes('in JSON at position 1'))
   } finally {
@@ -58,7 +59,7 @@ test('Functions: invalid package.json', async (t) => {
 test('Functions: --functionsDistDir', async (t) => {
   const functionsDistDir = await getTempName()
   try {
-    const output = await new Fixture('./fixtures/simple')
+    const output = await new Fixture(test.meta.file, './fixtures/simple')
       .withFlags({ mode: 'buildbot', functionsDistDir })
       .runWithBuild()
     t.snapshot(normalizeOutput(output))
@@ -72,17 +73,17 @@ test('Functions: --functionsDistDir', async (t) => {
 })
 
 test('Functions: custom path on scheduled function', async (t) => {
-  const output = await new Fixture('./fixtures/custom_path_scheduled').runWithBuild()
+  const output = await new Fixture(test.meta.file, './fixtures/custom_path_scheduled').runWithBuild()
   t.true(output.includes('Scheduled functions must not specify a custom path.'))
 })
 
 test('Functions: custom path on event-triggered function', async (t) => {
-  const output = await new Fixture('./fixtures/custom_path_event_triggered').runWithBuild()
+  const output = await new Fixture(test.meta.file, './fixtures/custom_path_event_triggered').runWithBuild()
   t.true(output.includes('Event-triggered functions must not specify a custom path.'))
 })
 
 test('Functions: internal functions are cleared on the dev timeline', async (t) => {
-  const fixture = await new Fixture('./fixtures/functions_leftover')
+  const fixture = await new Fixture(test.meta.file, './fixtures/functions_leftover')
     .withFlags({ debug: false, timeline: 'dev' })
     .withCopyRoot()
 
@@ -110,7 +111,7 @@ test('Functions: internal functions are cleared on the dev timeline', async (t) 
 })
 
 test('Functions: cleanup is only triggered when there are internal functions', async (t) => {
-  const fixture = await new Fixture('./fixtures/internal_functions')
+  const fixture = await new Fixture(test.meta.file, './fixtures/internal_functions')
     .withFlags({ debug: false, timeline: 'dev' })
     .withCopyRoot()
 
@@ -122,7 +123,7 @@ test('Functions: cleanup is only triggered when there are internal functions', a
 })
 
 test('Functions: loads functions generated with the Frameworks API', async (t) => {
-  const fixture = await new Fixture('./fixtures/functions_user_and_frameworks')
+  const fixture = await new Fixture(test.meta.file, './fixtures/functions_user_and_frameworks')
     .withFlags({ debug: false })
     .withCopyRoot()
 
@@ -137,7 +138,7 @@ test('Functions: loads functions generated with the Frameworks API', async (t) =
 })
 
 test('Functions: loads functions from the `.netlify/functions-internal` directory and the Frameworks API', async (t) => {
-  const fixture = await new Fixture('./fixtures/functions_user_internal_and_frameworks')
+  const fixture = await new Fixture(test.meta.file, './fixtures/functions_user_internal_and_frameworks')
     .withFlags({ debug: false })
     .withCopyRoot()
 
@@ -165,43 +166,123 @@ test('Functions: loads functions from the `.netlify/functions-internal` director
   t.snapshot(normalizeOutput(output))
 })
 
-// the monorepo works with pnpm which is not always available
-if (semver.gte(nodeVersion, '18.19.0')) {
-  test('Functions: loads functions generated with the Frameworks API in a monorepo setup', async (t) => {
-    const fixture = await new Fixture('./fixtures/functions_monorepo').withCopyRoot({ git: false })
-    const app1 = await fixture
-      .withFlags({
-        cwd: fixture.repositoryRoot,
-        packagePath: 'apps/app-1',
-      })
-      .runWithBuildAndIntrospect()
+test('Functions: loads functions generated with the Frameworks API in a monorepo setup', async (t) => {
+  const fixture = await new Fixture(test.meta.file, './fixtures/functions_monorepo').withCopyRoot({ git: false })
+  const app1 = await fixture
+    .withFlags({
+      cwd: fixture.repositoryRoot,
+      packagePath: 'apps/app-1',
+    })
+    .runWithBuildAndIntrospect()
 
-    t.true(app1.success)
+  t.true(app1.success)
 
-    const app2 = await fixture
-      .withFlags({
-        cwd: fixture.repositoryRoot,
-        packagePath: 'apps/app-2',
-      })
-      .runWithBuildAndIntrospect()
+  const app2 = await fixture
+    .withFlags({
+      cwd: fixture.repositoryRoot,
+      packagePath: 'apps/app-2',
+    })
+    .runWithBuildAndIntrospect()
 
-    t.true(app2.success)
+  t.true(app2.success)
 
-    const app1FunctionsDist = await readdir(resolve(fixture.repositoryRoot, 'apps/app-1/.netlify/functions'))
-    t.is(app1FunctionsDist.length, 2)
-    t.true(app1FunctionsDist.includes('manifest.json'))
-    t.true(app1FunctionsDist.includes('server.zip'))
+  const app1FunctionsDist = await readdir(resolve(fixture.repositoryRoot, 'apps/app-1/.netlify/functions'))
+  t.is(app1FunctionsDist.length, 2)
+  t.true(app1FunctionsDist.includes('manifest.json'))
+  t.true(app1FunctionsDist.includes('server.zip'))
 
-    const app2FunctionsDist = await readdir(resolve(fixture.repositoryRoot, 'apps/app-2/.netlify/functions'))
-    t.is(app2FunctionsDist.length, 3)
-    t.true(app2FunctionsDist.includes('manifest.json'))
-    t.true(app2FunctionsDist.includes('server.zip'))
-    t.true(app2FunctionsDist.includes('worker.zip'))
+  const app2FunctionsDist = await readdir(resolve(fixture.repositoryRoot, 'apps/app-2/.netlify/functions'))
+  t.is(app2FunctionsDist.length, 3)
+  t.true(app2FunctionsDist.includes('manifest.json'))
+  t.true(app2FunctionsDist.includes('server.zip'))
+  t.true(app2FunctionsDist.includes('worker.zip'))
+})
+
+const fakeResult = (overrides = {}) => ({
+  name: 'fn',
+  runtime: 'js',
+  bundler: 'zisi',
+  ...overrides,
+})
+
+test.serial('trackBundleResults: writes the rich summary to the system log', (t) => {
+  const messages = []
+  trackBundleResults({
+    systemLog: (...args) => messages.push(args),
+    results: [fakeResult({ name: 'a', bundler: 'zisi', bundlerErrors: [{}] })],
   })
-}
+  t.deepEqual(messages, [
+    [
+      {
+        msg: 'Functions bundling completed successfully',
+        bundlers: ['zisi'],
+        bundlerCounts: { zisi: 1 },
+        fallbackCount: 1,
+        warningsCount: 0,
+        functions: [
+          {
+            name: 'a',
+            runtime: 'js',
+            bundler: 'zisi',
+            bundlerReason: null,
+            sizeBytes: null,
+            hadFallback: true,
+            hadWarnings: false,
+          },
+        ],
+      },
+    ],
+  ])
+})
+
+test.serial('trackBundleResults: returns summary stats for metric tags', (t) => {
+  const summary = trackBundleResults({
+    systemLog: () => {},
+    results: [
+      fakeResult({ name: 'a', bundler: 'esbuild' }),
+      fakeResult({ name: 'b', bundler: 'zisi', bundlerErrors: [{}] }),
+    ],
+  })
+  t.deepEqual(summary, { bundlers: ['esbuild', 'zisi'], fallbackCount: 1, warningsCount: 0 })
+})
+
+test.serial('trackBundleResults: records per-function bundler reason and sizes', (t) => {
+  const messages = []
+  trackBundleResults({
+    systemLog: (...args) => messages.push(args),
+    results: [
+      fakeResult({ name: 'a', bundler: 'nft', bundlerReason: 'flag-forced-nft', size: 100 }),
+      fakeResult({ name: 'b', bundler: 'zisi', bundlerReason: 'zisi-default', size: 200 }),
+      fakeResult({ name: 'c', bundler: 'nft', bundlerReason: 'esm-default', size: 300 }),
+    ],
+  })
+
+  const [[payload]] = messages
+  t.deepEqual(
+    payload.functions.map(({ name, bundlerReason, sizeBytes }) => ({ name, bundlerReason, sizeBytes })),
+    [
+      { name: 'a', bundlerReason: 'flag-forced-nft', sizeBytes: 100 },
+      { name: 'b', bundlerReason: 'zisi-default', sizeBytes: 200 },
+      { name: 'c', bundlerReason: 'esm-default', sizeBytes: 300 },
+    ],
+  )
+})
+
+// Prebuilt `.zip` JS functions pass through zip-it-and-ship-it with no
+// `bundler` field. They should not pollute `bundlers` with `undefined`.
+test.serial('trackBundleResults: excludes JS results that have no bundler (prebuilt .zip)', (t) => {
+  const summary = trackBundleResults({
+    systemLog: () => {},
+    results: [
+      fakeResult({ name: 'a', bundler: 'esbuild' }),
+      fakeResult({ name: 'b', bundler: undefined }), // prebuilt .zip
+    ],
+  })
+  t.deepEqual(summary.bundlers, ['esbuild'])
+})
 
 test('Functions: creates metadata file', async (t) => {
-  const fixture = await new Fixture('./fixtures/v2').withCopyRoot({ git: false })
+  const fixture = await new Fixture(test.meta.file, './fixtures/v2').withCopyRoot({ git: false })
   const build = await fixture
     .withFlags({
       branch: 'my-branch',

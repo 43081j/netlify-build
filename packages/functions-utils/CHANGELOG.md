@@ -1,5 +1,100 @@
 # Changelog
 
+## [7.1.3](https://github.com/netlify/build/compare/functions-utils-v7.1.2...functions-utils-v7.1.3) (2026-08-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @netlify/zip-it-and-ship-it bumped from 15.3.2 to 15.3.3
+
+## [7.1.2](https://github.com/netlify/build/compare/functions-utils-v7.1.1...functions-utils-v7.1.2) (2026-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @netlify/zip-it-and-ship-it bumped from 15.3.1 to 15.3.2
+
+## [7.1.1](https://github.com/netlify/build/compare/functions-utils-v7.1.0...functions-utils-v7.1.1) (2026-08-03)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @netlify/zip-it-and-ship-it bumped from 15.3.0 to 15.3.1
+
+## [7.1.0](https://github.com/netlify/build/compare/functions-utils-v7.0.3...functions-utils-v7.1.0) (2026-07-17)
+
+
+### Features
+
+* trigger no-op releases with NPM Trusted Publishing ([#7131](https://github.com/netlify/build/issues/7131)) ([ec0cd90](https://github.com/netlify/build/commit/ec0cd90d524706f9442346da1d94885abae8a0c9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @netlify/zip-it-and-ship-it bumped from 15.2.0 to 15.3.0
+
+## [7.0.3](https://github.com/netlify/build/compare/functions-utils-v7.0.2...functions-utils-v7.0.3) (2026-07-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @netlify/zip-it-and-ship-it bumped from 15.1.0 to 15.2.0
+
+## [7.0.2](https://github.com/netlify/build/compare/functions-utils-v7.0.1...functions-utils-v7.0.2) (2026-06-30)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @netlify/zip-it-and-ship-it bumped from 15.0.1 to 15.1.0
+
+## [7.0.1](https://github.com/netlify/build/compare/functions-utils-v7.0.0...functions-utils-v7.0.1) (2026-06-18)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @netlify/zip-it-and-ship-it bumped from 15.0.0 to 15.0.1
+
+## [7.0.0](https://github.com/netlify/build/compare/functions-utils-v6.2.35...functions-utils-v7.0.0) (2026-06-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* end of support for Node.js v18 and v20 ([#7054](https://github.com/netlify/build/issues/7054))
+
+### Features
+
+* end of support for Node.js v18 and v20 ([#7054](https://github.com/netlify/build/issues/7054)) ([4358aa0](https://github.com/netlify/build/commit/4358aa0c0c5fedf482c48696305b0c707f3ea408))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @netlify/zip-it-and-ship-it bumped from 14.7.1 to 15.0.0
+
+## [6.2.35](https://github.com/netlify/build/compare/functions-utils-v6.2.34...functions-utils-v6.2.35) (2026-06-10)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @netlify/zip-it-and-ship-it bumped from 14.7.0 to 14.7.1
+
 ## [6.2.34](https://github.com/netlify/build/compare/functions-utils-v6.2.33...functions-utils-v6.2.34) (2026-05-25)
 
 
