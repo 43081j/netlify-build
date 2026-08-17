@@ -3,8 +3,9 @@
 
 Utility for running commands inside Netlify Build
 
-Currently, there is just one utility, `run`, which is a thin wrapper over `execa` defaulting to
-`{ preferLocal: true, stdio: 'inherit' }`.
+Currently, there is just one utility, `run`, which is a thin wrapper over
+[`tinyexec`](https://github.com/tinylibs/tinyexec). Local binaries can be run by default and output is redirected to the
+parent process unless the `stdio` option is set.
 
 # Examples
 
@@ -14,15 +15,6 @@ Currently, there is just one utility, `run`, which is a thin wrapper over `execa
 const exampleNetlifyPlugin = {
   async onBuild({ utils: { run } }) {
     await run('eslint', ['src/', 'test/'])
-  },
-}
-```
-
-```js
-// Same but with a more convenient syntax
-const exampleNetlifyPlugin = {
-  async onBuild({ utils: { run } }) {
-    await run.command('eslint src/ test/')
   },
 }
 ```
@@ -41,8 +33,8 @@ const exampleNetlifyPlugin = {
 // Streaming mode
 const exampleNetlifyPlugin = {
   onBuild({ utils: { run } }) {
-    const { stdout } = run('eslint', ['src/', 'test/'])
-    stdout.pipe(fs.createWriteStream('stdout.txt'))
+    const { process } = run('eslint', ['src/', 'test/'])
+    process.stdout.pipe(fs.createWriteStream('stdout.txt'))
   },
 }
 ```
@@ -75,12 +67,3 @@ const exampleNetlifyPlugin = {
 ## run(file, arguments, options?)
 
 Execute a command/file.
-
-## run.command(command, options?)
-
-Same as [`run()`](#runfile-arguments-options) except both file and arguments are specified in a single `command` string.
-For example, `run('echo', ['netlify'])` is the same as `run.command('echo netlify')`.
-
-If the file or an argument contains spaces, they must be escaped with backslashes. This matters especially if `command`
-is not a constant but a variable, for example with `__dirname` or `process.cwd()`. Except for spaces, no
-escaping/quoting is needed.
