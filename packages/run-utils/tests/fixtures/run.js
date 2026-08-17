@@ -1,7 +1,8 @@
 import { argv } from 'process'
 
-import { runCommand } from '../../lib/main.js'
+import { run } from '../../lib/main.js'
 
-const [, , command, options] = argv
+const [, , file, args, options] = argv
+const argsA = args === undefined ? [] : JSON.parse(args)
 const optionsA = options === undefined ? options : JSON.parse(options)
-runCommand(command, optionsA)
+run(file, argsA, optionsA)

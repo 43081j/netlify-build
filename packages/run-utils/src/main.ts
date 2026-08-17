@@ -1,48 +1,37 @@
+import type { SpawnOptions } from 'child_process'
 import process from 'process'
 
-import { execa, type ExecaChildProcess, execaCommand, type Options, type CommonOptions } from 'execa'
-
-/** Allow running local binaries by default */
-const DEFAULT_OPTIONS: Partial<CommonOptions> = { preferLocal: true }
+import { x, type Result } from 'tinyexec'
 
 /** Run a command, with arguments being an array */
-export const run = (file: string, args?: string[] | object, options?: Options) => {
-  const [argsA, optionsA] = parseArgs(args, options)
-  const optionsB = { ...DEFAULT_OPTIONS, ...optionsA }
-  const childProcess = execa(file, argsA, optionsB)
-  redirectOutput(childProcess, optionsB)
-  return childProcess
-}
-
-/** Run a command, with file + arguments being a single string */
-export const runCommand = (command: string, options: Options) => {
-  const optionsA = { ...DEFAULT_OPTIONS, ...options }
-  const childProcess = execaCommand(command, options)
+export const run = (file: string, args?: string[] | SpawnOptions, options?: SpawnOptions) => {
+  const [argsA, optionsA = {}] = parseArgs(args, options)
+  const childProcess = x(file, argsA, { throwOnError: true, nodeOptions: optionsA })
   redirectOutput(childProcess, optionsA)
   return childProcess
 }
 
 /** Both `args` and `options` are optional */
-const parseArgs = function (args, options) {
+const parseArgs = (args?: string[] | SpawnOptions, options?: SpawnOptions): [string[], SpawnOptions | undefined] => {
   if (Array.isArray(args)) {
     return [args, options]
   }
 
-  if (typeof args === 'object') {
+  if (typeof args === 'object' && args !== null) {
     return [[], args]
   }
 
-  return []
+  return [[], options]
 }
 
 /**
  * Redirect output by default, unless specified otherwise
  * */
-const redirectOutput = (childProcess: ExecaChildProcess<string>, options: CommonOptions) => {
-  if (options.stdio !== undefined || options.stdout !== undefined || options.stderr !== undefined) {
+const redirectOutput = (childProcess: Result, options: SpawnOptions) => {
+  if (options.stdio !== undefined) {
     return
   }
 
-  childProcess.stdout?.pipe(process.stdout)
-  childProcess.stderr?.pipe(process.stderr)
+  childProcess.process?.stdout?.pipe(process.stdout)
+  childProcess.process?.stderr?.pipe(process.stderr)
 }

@@ -1,27 +1,21 @@
-import { platform, version } from 'process'
+import { execPath, platform, version } from 'process'
 import { fileURLToPath } from 'url'
 
-import { execaNode } from 'execa'
+import { x } from 'tinyexec'
 import { test, expect } from 'vitest'
 
-import { run, runCommand } from '../src/main.js'
+import { run } from '../src/main.js'
 
 const FIXTURES_DIR = fileURLToPath(new URL('fixtures', import.meta.url))
 const RUN_FILE = `${FIXTURES_DIR}/run.js`
 
-const runInChildProcess = (command: string, options?: Record<string, unknown>) => {
+const runInChildProcess = (file: string, args: string[] = [], options?: Record<string, unknown>) => {
   const optionsA = options === undefined ? [] : [JSON.stringify(options)]
-  return execaNode(RUN_FILE, [command, ...optionsA])
+  return x(execPath, [RUN_FILE, file, JSON.stringify(args), ...optionsA], { throwOnError: true })
 }
 
-test('Should expose several methods', () => {
+test('Should expose a run method', () => {
   expect(typeof run).toBe('function')
-  expect(typeof runCommand).toBe('function')
-})
-
-test('Can run a command as a single string', async () => {
-  const { stdout } = await runCommand('node --version', { stdio: 'pipe' })
-  expect(stdout).toBe(version)
 })
 
 // `echo` in `cmd.exe` is different from Unix
@@ -48,16 +42,16 @@ test('Should redirect stdout/stderr to parent', async () => {
 })
 
 test('Should not redirect stdout/stderr to parent when using "stdio" option', async () => {
-  const { stdout } = await runInChildProcess('node --version', { stdio: 'pipe' })
+  const { stdout } = await runInChildProcess('node', ['--version'], { stdio: 'pipe' })
   expect(stdout).toBe('')
 })
 
 test('Should not redirect stdout/stderr to parent when using "stdout" option', async () => {
-  const { stdout } = await runInChildProcess('node --version', { stdout: 'pipe' })
+  const { stdout } = await runInChildProcess('node', ['--version'], { stdout: 'pipe' })
   expect(stdout).toBe('')
 })
 
 test('Should not redirect stdout/stderr to parent when using "stderr" option', async () => {
-  const { stdout } = await runInChildProcess('node --version', { stderr: 'pipe' })
+  const { stdout } = await runInChildProcess('node', ['--version'], { stderr: 'pipe' })
   expect(stdout).toBe('')
 })

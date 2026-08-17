@@ -1,7 +1,7 @@
 import { bindOpts as cacheBindOpts } from '@netlify/cache-utils'
 import { add as functionsAdd, list as functionsList, listAll as functionsListAll } from '@netlify/functions-utils'
 import { getGitUtils } from '@netlify/git-utils'
-import { run as baseRun, runCommand } from '@netlify/run-utils'
+import { run } from '@netlify/run-utils'
 
 import { failBuild, failPlugin, cancelBuild, failPluginWithWarning } from '../error.js'
 import { isSoftFailEvent } from '../events.js'
@@ -34,7 +34,6 @@ export const getUtils = function ({
   runState: RunState
   deployEnvVars: DeployEnvVarsData
 }): NetlifyPluginUtils {
-  const run = Object.assign(baseRun, { command: runCommand }) as unknown as NetlifyPluginUtils['run']
   const build = getBuildUtils(event)
   const cache = getCacheUtils(CACHE_DIR)
   const deploy = getDeployUtils({ deployEnvVars })
