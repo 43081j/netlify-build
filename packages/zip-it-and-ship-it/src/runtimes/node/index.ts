@@ -118,6 +118,7 @@ const zipFunction: ZipFunction = async function ({
     nativeNodeModules,
     rewrites = new Map(),
     srcFiles,
+    traceSummary,
   } = await bundler.bundle({
     basePath,
     cache,
@@ -215,6 +216,7 @@ const zipFunction: ZipFunction = async function ({
     path: zipResult.path,
     priority,
     trafficRules,
+    traceSummary,
     runtimeVersion:
       runtimeAPIVersion === 2
         ? getNodeRuntimeForV2(mergedConfig.nodeVersion)

@@ -39,4 +39,6 @@ export const getBundleResultSpanAttributes = (
   'bundler.warnings_count': result.bundlerWarnings?.length ?? 0,
   'bundler.errors_count': result.bundlerErrors?.length ?? 0,
   'bundle.size_bytes': sizeBytes,
+  'bundle.traced_bytes': result.traceSummary?.totalBytes,
+  'bundle.top_files': result.traceSummary ? JSON.stringify(result.traceSummary.topFiles) : undefined,
 })

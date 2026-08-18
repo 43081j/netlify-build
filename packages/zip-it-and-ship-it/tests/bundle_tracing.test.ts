@@ -2,7 +2,13 @@ import { SpanStatusCode, trace } from '@opentelemetry/api'
 import { BasicTracerProvider, InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
-import { zipFixture } from './helpers/main.js'
+import { randomBytes } from 'crypto'
+import { rm, writeFile } from 'fs/promises'
+import { join } from 'path'
+
+import type { TracedFile } from '../src/runtimes/node/bundlers/nft/trace_summary.js'
+
+import { FIXTURES_DIR, zipFixture } from './helpers/main.js'
 
 // `function.bundle` spans are created via the global tracer, so capture them with an
 // in-memory exporter. Reset between tests since the tracer provider is global state.
@@ -45,6 +51,36 @@ describe('function.bundle spans', () => {
     const [span] = getBundleSpans()
     expect(span.attributes['bundler.name']).toBe('nft')
     expect(span.attributes['bundler.reason']).toBe('flag-forced-nft')
+  })
+
+  test('records trace summary attributes for files included by a dynamic require', async () => {
+    const videoSize = 1024
+    const videoPath = join(FIXTURES_DIR, 'nft-dynamic-require-assets', 'assets', 'video.mp4')
+
+    await writeFile(videoPath, randomBytes(videoSize))
+
+    try {
+      await zipFixture('nft-dynamic-require-assets', { opts: { featureFlags: { traceWithNft: true } } })
+    } finally {
+      await rm(videoPath, { force: true })
+    }
+
+    const [span] = getBundleSpans()
+    expect(span.attributes['bundle.traced_bytes']).toBeGreaterThan(videoSize)
+
+    const topFiles = JSON.parse(span.attributes['bundle.top_files'] as string) as TracedFile[]
+    expect(topFiles[0].path.endsWith('video.mp4')).toBe(true)
+    expect(topFiles[0].bytes).toBe(videoSize)
+    expect(topFiles[0].parent?.endsWith('function.js')).toBe(true)
+  })
+
+  test('does not record trace summary attributes for bundlers other than nft', async () => {
+    await zipFixture('simple')
+
+    const [span] = getBundleSpans()
+    expect(span.attributes['bundler.name']).toBe('zisi')
+    expect(span.attributes['bundle.traced_bytes']).toBeUndefined()
+    expect(span.attributes['bundle.top_files']).toBeUndefined()
   })
 
   test('records an exception and marks the span as errored when the bundler fails', async () => {

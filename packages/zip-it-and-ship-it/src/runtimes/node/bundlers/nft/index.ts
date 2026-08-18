@@ -16,6 +16,7 @@ import type { GetSrcFilesFunction, BundleFunction } from '../types.js'
 
 import { processESM } from './es_modules.js'
 import { getSideFiles } from './side_files.js'
+import { getTraceSummary } from './trace_summary.js'
 import { transform, getTransformer } from './transformer.js'
 
 const appearsToBeModuleName = (name: string) => !name.startsWith('.')
@@ -62,6 +63,7 @@ const bundle: BundleFunction = async ({
     moduleFormat,
     rewrites,
     tracedPaths,
+    traceSummary,
   } = await traceFilesAndTranspile({
     basePath: repositoryRoot,
     cache,
@@ -93,6 +95,7 @@ const bundle: BundleFunction = async ({
     moduleFormat,
     rewrites,
     srcFiles,
+    traceSummary,
   }
 }
 
@@ -206,6 +209,7 @@ const traceFilesAndTranspile = async function ({
     },
   })
   const normalizedTracedPaths = [...dependencyPaths].map((path) => (basePath ? resolve(basePath, path) : resolve(path)))
+  const traceSummary = await getTraceSummary({ basePath, cache, fileList: dependencyPaths, reasons })
 
   if (transformer) {
     return {
@@ -215,6 +219,7 @@ const traceFilesAndTranspile = async function ({
       moduleFormat: transformer.format,
       rewrites: transformer.rewrites,
       tracedPaths: normalizedTracedPaths,
+      traceSummary,
     }
   }
 
@@ -235,6 +240,7 @@ const traceFilesAndTranspile = async function ({
     moduleFormat,
     rewrites,
     tracedPaths: normalizedTracedPaths,
+    traceSummary,
   }
 }
 

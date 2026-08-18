@@ -8,6 +8,7 @@ import type { RuntimeCache } from '../../../utils/cache.js'
 import type { ObjectValues } from '../../../types/utils.js'
 import { Logger } from '../../../utils/logger.js'
 import type { ModuleFormat } from '../utils/module_format.js'
+import type { TraceSummary } from './nft/trace_summary.js'
 
 export const NODE_BUNDLER = {
   ESBUILD: 'esbuild',
@@ -82,6 +83,7 @@ export type BundleFunction = (
   moduleFormat: ModuleFormat
   nativeNodeModules?: NativeNodeModules
   srcFiles: string[]
+  traceSummary?: TraceSummary
 }>
 
 export type GetSrcFilesFunction = (

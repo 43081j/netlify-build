@@ -11,6 +11,7 @@ import type { RuntimeCache } from '../utils/cache.js'
 import { Logger } from '../utils/logger.js'
 
 import type { BundlerReason, NodeBundlerName } from './node/bundlers/types.js'
+import type { TraceSummary } from './node/bundlers/nft/trace_summary.js'
 import type { StaticAnalysisResult } from './node/in_source_config/index.js'
 
 export const RUNTIME = {
@@ -64,6 +65,7 @@ export interface ZipFunctionResult {
   runtimeVersion?: string
   staticAnalysisResult?: StaticAnalysisResult
   entryFilename: string
+  traceSummary?: TraceSummary
 }
 
 export type ZipFunction = (

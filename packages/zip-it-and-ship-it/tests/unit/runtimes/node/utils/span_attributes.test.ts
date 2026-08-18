@@ -60,6 +60,8 @@ describe('getBundleResultSpanAttributes', () => {
       'bundler.warnings_count': 2,
       'bundler.errors_count': 1,
       'bundle.size_bytes': 2048,
+      'bundle.traced_bytes': undefined,
+      'bundle.top_files': undefined,
     })
   })
 
@@ -70,6 +72,21 @@ describe('getBundleResultSpanAttributes', () => {
       'bundler.warnings_count': 0,
       'bundler.errors_count': 0,
       'bundle.size_bytes': undefined,
+      'bundle.traced_bytes': undefined,
+      'bundle.top_files': undefined,
     })
+  })
+
+  test('maps the trace summary to bundle attributes', () => {
+    const topFiles = [{ path: 'assets/video.mp4', bytes: 1024, parent: 'function.js' }]
+    const result = {
+      path: '/tmp/fn.zip',
+      traceSummary: { totalBytes: 1536, topFiles },
+    } as unknown as ZipFunctionResult
+
+    const attributes = getBundleResultSpanAttributes(result, 2048)
+
+    expect(attributes['bundle.traced_bytes']).toBe(1536)
+    expect(attributes['bundle.top_files']).toBe(JSON.stringify(topFiles))
   })
 })
