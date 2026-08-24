@@ -1,13 +1,15 @@
+import { resolveModulePath } from 'exsolve'
 import { createRequire } from 'module'
-
-import { async as resolveLib } from 'resolve'
 
 // TODO: use `import.resolve()` once it is available without any experimental
 // flags
 const require = createRequire(import.meta.url)
 
 // Like `resolvePath()` but does not throw
-export const tryResolvePath = async function (path, basedir) {
+export const tryResolvePath = async function (
+  path: string,
+  basedir: string,
+): Promise<{ path: string } | { error: unknown }> {
   try {
     const resolvedPath = await resolvePath(path, basedir)
     return { path: resolvedPath }
@@ -17,9 +19,10 @@ export const tryResolvePath = async function (path, basedir) {
 }
 
 // This throws if the package cannot be found
-export const resolvePath = async function (path, basedir) {
+// eslint-disable-next-line @typescript-eslint/require-await
+export const resolvePath = async function (path: string, basedir: string): Promise<string> {
   try {
-    return await resolvePathWithBasedir(path, basedir)
+    return resolvePathWithBasedir(path, basedir)
     // Fallback.
     // `resolve` sometimes gives unhelpful error messages.
     // https://github.com/browserify/resolve/issues/223
@@ -29,17 +32,12 @@ export const resolvePath = async function (path, basedir) {
 }
 
 // Like `require.resolve()` but as an external library.
-// We need to use `new Promise()` due to a bug with `utils.promisify()` on
-// `resolve`:
-//   https://github.com/browserify/resolve/issues/151#issuecomment-368210310
-const resolvePathWithBasedir = function (path, basedir) {
-  return new Promise((resolve, reject) => {
-    resolveLib(path, { basedir }, (error, resolvedPath) => {
-      if (error) {
-        return reject(error)
-      }
+const resolvePathWithBasedir = function (path: string, basedir: string): string {
+  const resolvedPath = resolveModulePath(path, { from: basedir, try: true })
 
-      resolve(resolvedPath)
-    })
-  })
+  if (resolvedPath === undefined) {
+    throw new Error(`Could not resolve "${path}"`)
+  }
+
+  return resolvedPath
 }
