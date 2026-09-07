@@ -559,6 +559,33 @@ describe('zip-it-and-ship-it', () => {
   )
 
   testMany(
+    'Errors at bundle time when bundling a CJS V2 function inside a `"type": "module"` package scope and the `zisi_error_cjs_in_esm_scope` flag is on',
+    ['bundler_default', 'bundler_nft', 'bundler_esbuild'],
+    async (options) => {
+      const fixtureName = 'node-cjs-in-esm-scope-v2'
+      const opts = merge(options, {
+        featureFlags: { zisi_error_cjs_in_esm_scope: true },
+      })
+
+      try {
+        await zipFixture(fixtureName, { opts })
+
+        expect.fail('Bundling should have thrown')
+      } catch (error) {
+        expect(error).instanceOf(FunctionBundlingUserError)
+
+        const { customErrorInfo, message } = error as FunctionBundlingUserError
+
+        expect(message).toMatch('is a CommonJS module, but the closest \'package.json\' declares \'"type": "module"\'')
+        expect(customErrorInfo.type).toBe('functionsBundling')
+        expect(customErrorInfo.location.bundler).toBe('nft')
+        expect(customErrorInfo.location.functionName).toBe('function')
+        expect(customErrorInfo.location.runtime).toBe('js')
+      }
+    },
+  )
+
+  testMany(
     'Produces a working bundle when bundling a CJS function inside a `"type": "module"` package scope (zisi)',
     ['bundler_default'],
     async (options) => {
