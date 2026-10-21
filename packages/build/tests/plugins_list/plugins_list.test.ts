@@ -327,6 +327,27 @@ test('Plugins can specify non-matching compatibility.siteDependencies range', as
   ).toMatchSnapshot()
 })
 
+test('Plugins can specify matching compatibility.siteDependencies range when the dependency has a restrictive exports map', async () => {
+  await removeDir(`${FIXTURES_DIR}/plugins_compat_site_dependencies_exports/.netlify`)
+  const normalizedOutput = await runWithApiMock('plugins_compat_site_dependencies_exports', {
+    testPlugin: {
+      compatibility: [
+        { version: '0.3.0' },
+        {
+          version: '0.2.0',
+          siteDependencies: {
+            // this is satisfied, so this version should be selected
+            '@netlify/dependency-with-exports': '<10',
+          },
+        },
+      ],
+    },
+  })
+  expect(normalizedOutput).toContain(
+    'netlify-plugin-contextual-env 0-2-0 from netlify.toml (latest 0-3-0, expected 0-2-0, compatible 0-2-0)',
+  )
+})
+
 test('Plugins can specify matching compatibility.siteDependencies range in monorepo with hoisted node_modules', async () => {
   await removeDir(`${FIXTURES_DIR}/plugins_compat_site_dependencies_range_monorepo_hoisted/apps/web/.netlify`)
   const normalizedOutput = await runWithApiMock('plugins_compat_site_dependencies_range_monorepo_hoisted', {

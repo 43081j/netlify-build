@@ -81,6 +81,7 @@
     "fast-string-width": "^3.0.2",
     "fdir": "^6.0.1",
     "figures": "^6.0.0",
+    "find-up": "^7.0.0",
     "hot-shots": "11.4.0",
     "ignore": "^7.0.0",
     "indent-string": "^5.0.0",
