@@ -1,100 +1,55 @@
 import { createRequire } from 'module'
+import { join } from 'path'
 
+import { resolveModulePath } from 'exsolve'
 import { findUp } from 'find-up'
-import { pathExists } from 'path-exists'
-import { async as asyncResolve } from 'resolve'
 
 const require = createRequire(import.meta.url)
 
-const BACKSLASH_REGEXP = /\\/g
-
-// Find the path to a module's `package.json`
-// We need to use `resolve` instead of `require.resolve()` because:
-//  - it is async
-//  - it preserves symlinks:
-//     - this is important because if a file does a `require('./symlink')`, we
-//       need to bundle the symlink and its target, not only the target
-//     - `path.resolve()` cannot be used for relative|absolute file paths
-//       because it does not resolve omitted file extension,
-//       e.g. `require('./file')` instead of `require('./file.js')`
-//     - the CLI flag `--preserve-symlinks` can be used with Node.js, but it
-//       cannot be set runtime
-// However it does not give helpful error messages.
-//   https://github.com/browserify/resolve/issues/223
-// So, on errors, we fallback to `require.resolve()`
+// Find the path to a module's `package.json` by walking up `node_modules`
+// directories from each base directory. Unlike module resolution, this is not
+// subject to the package's `exports` field, which can forbid resolving
+// `package.json` directly.
 export const resolvePackage = async function (moduleName: string, baseDirs: string[]): Promise<string> {
-  try {
-    return await resolvePathPreserveSymlinks(`${moduleName}/package.json`, baseDirs)
-  } catch {
-    try {
-      return resolvePathFollowSymlinks(`${moduleName}/package.json`, baseDirs)
-    } catch (error) {
-      return await resolvePackageFallback(moduleName, baseDirs, error)
+  const packageJsonPath = join('node_modules', moduleName, 'package.json')
+
+  for (const baseDir of baseDirs) {
+    const packagePath = await findUp(packageJsonPath, { cwd: baseDir })
+
+    if (packagePath !== undefined) {
+      return packagePath
     }
   }
+
+  const error = new Error(`Cannot find module '${moduleName}'`)
+  ;(error as Error & { code: string }).code = 'MODULE_NOT_FOUND'
+  throw error
 }
 
-// We need to use `new Promise()` due to a bug with `utils.promisify()` on
-// `resolve`:
-//   https://github.com/browserify/resolve/issues/151#issuecomment-368210310
-const resolvePathPreserveSymlinksForDir = function (path: string, basedir: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    asyncResolve(path, { basedir, preserveSymlinks: true }, (error, resolvedLocation) => {
-      if (error || resolvedLocation === undefined) {
-        return reject(error)
-      }
-
-      resolve(resolvedLocation)
-    })
-  })
-}
-
-// the resolve library has a `paths` option but it's not the same as multiple basedirs
-// see https://github.com/browserify/resolve/issues/188#issuecomment-679010477
-// we return the first resolved location or the first error if all failed
+// We need to use `exsolve` instead of `require.resolve()` because it can
+// preserve symlinks:
+//  - this is important because if a file does a `require('./symlink')`, we
+//    need to bundle the symlink and its target, not only the target
+//  - `path.resolve()` cannot be used for relative|absolute file paths
+//    because it does not resolve omitted file extension,
+//    e.g. `require('./file')` instead of `require('./file.js')`
+//  - the CLI flag `--preserve-symlinks` can be used with Node.js, but it
+//    cannot be set runtime
+// `exsolve` follows ESM resolution rules, which reject some specifiers that
+// CommonJS accepts, such as package names starting with a dot
+// (e.g. `.prisma/client`). We fall back to `require.resolve()` for those.
+// eslint-disable-next-line @typescript-eslint/require-await
 export const resolvePathPreserveSymlinks = async function (path: string, baseDirs: string[]): Promise<string> {
-  let firstError
-
-  for (const basedir of baseDirs) {
-    try {
-      return await resolvePathPreserveSymlinksForDir(path, basedir)
-    } catch (error) {
-      firstError = firstError || error
-    }
+  try {
+    return resolveModulePath(path, {
+      from: baseDirs.map((dir) => `${dir}/`),
+      conditions: ['node', 'require'],
+      extensions: ['.js', '.json', '.node'],
+      suffixes: ['', '/index'],
+      preserveSymlinks: true,
+      cache: false,
+    })
+  } catch {
+    return require.resolve(path, { paths: baseDirs })
   }
-
-  throw firstError
-}
-
-const resolvePathFollowSymlinks = function (path: string, baseDirs: string[]) {
-  return require.resolve(path, { paths: baseDirs })
-}
-
-// `require.resolve()` on a module's specific file (like `package.json`)
-// can be forbidden by the package author by using an `exports` field in
-// their `package.json`. We need this fallback.
-// It looks for the first directory up from a package's `main` file that:
-//   - is named like the package
-//   - has a `package.json`
-// Theoretically, this might not the root `package.json`, but this is very
-// unlikely, and we don't have any better alternative.
-const resolvePackageFallback = async function (moduleName: string, baseDirs: string[], error: Error) {
-  const mainFilePath = resolvePathFollowSymlinks(moduleName, baseDirs)
-  const packagePath = await findUp(isPackageDir.bind(null, moduleName), { cwd: mainFilePath, type: 'directory' })
-
-  if (packagePath === undefined) {
-    throw error
-  }
-
-  return packagePath
-}
-
-const isPackageDir = async function (moduleName: string, dir: string) {
-  // Need to use `endsWith()` to take into account `@scope/package`.
-  // Backslashes need to be converted for Windows.
-  if (!dir.replace(BACKSLASH_REGEXP, '/').endsWith(moduleName) || !(await pathExists(`${dir}/package.json`))) {
-    return
-  }
-
-  return dir
 }
